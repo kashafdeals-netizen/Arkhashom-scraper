@@ -1,0 +1,56 @@
+name: Arkhashom Deals Bot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'  # fallback; use cron-job.org for reliability
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install Python dependencies
+        run: pip install -r requirements-cloud.txt
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Run bot
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_CHAT_ID: "@arkhashomoffers"
+          AFFILIATE_TAG: "arkhashom-21"
+          BANNER_PATH: "arkhashom_banner.png"
+          MAX_POSTS_PER_BOT: ${{ secrets.MAX_POSTS_PER_BOT || '3' }}
+          BOT_TOKEN_FASHION: ${{ secrets.BOT_TOKEN_FASHION }}
+          BOT_TOKEN_ELECTRONICS: ${{ secrets.BOT_TOKEN_ELECTRONICS }}
+          BOT_TOKEN_SUPERMARKET: ${{ secrets.BOT_TOKEN_SUPERMARKET }}
+          BOT_TOKEN_HOME: ${{ secrets.BOT_TOKEN_HOME }}
+          BOT_TOKEN_BEAUTY: ${{ secrets.BOT_TOKEN_BEAUTY }}
+          BOT_TOKEN_PROMOTIONS: ${{ secrets.BOT_TOKEN_PROMOTIONS }}
+        run: python run_cloud.py
+
+      - name: Commit state files
+        run: |
+          git config user.name "arkhashom-bot"
+          git config user.email "bot@arkhashom.dev"
+          git add data/ || true
+          git diff --cached --quiet && echo "No state changes" && exit 0
+          git commit -m "bot: update state $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push

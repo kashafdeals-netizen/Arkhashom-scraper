@@ -1,0 +1,15 @@
+# Screenshots (regenerated each run)
+data/*.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Local-only files
+config.env
+run_dashboard.bat
+setup.bat
+*.exe
